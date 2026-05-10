@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Agent System — How It Works</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f0f13; color: #e2e8f0; min-height: 100vh; padding: 40px 24px; }
+
+  h1 { text-align: center; font-size: 22px; font-weight: 700; color: #fff; margin-bottom: 4px; letter-spacing: -0.3px; }
+  .subtitle { text-align: center; font-size: 13px; color: #64748b; margin-bottom: 48px; }
+
+  .flow { display: flex; flex-direction: column; align-items: center; gap: 0; max-width: 860px; margin: 0 auto; }
+
+  /* ── boxes ── */
+  .box {
+    border-radius: 12px;
+    padding: 14px 20px;
+    font-size: 13px;
+    line-height: 1.5;
+    position: relative;
+    width: 100%;
+  }
+  .box .label { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; opacity: 0.6; margin-bottom: 4px; }
+  .box .title { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
+  .box .desc { font-size: 12px; opacity: 0.75; }
+
+  .box-you    { background: #1e293b; border: 1.5px solid #334155; max-width: 340px; text-align: center; }
+  .box-gate   { background: #1c1917; border: 1.5px solid #44403c; max-width: 420px; text-align: center; }
+  .box-orch   { background: #1a0a2e; border: 1.5px dashed #7c3aed; max-width: 480px; }
+  .box-notion { background: #0c1a2e; border: 1.5px solid #1d4ed8; max-width: 340px; text-align: center; }
+
+  /* phase rows */
+  .phase-row { display: flex; gap: 12px; width: 100%; justify-content: center; flex-wrap: wrap; }
+  .phase-col { display: flex; flex-direction: column; align-items: center; gap: 0; flex: 1; min-width: 180px; max-width: 220px; }
+
+  .agent {
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 12px;
+    width: 100%;
+    border: 1.5px solid transparent;
+  }
+  .agent .aname { font-weight: 700; font-size: 13px; margin-bottom: 2px; }
+  .agent .aout  { font-size: 11px; opacity: 0.65; }
+
+  .a-blue   { background: #0f172a; border-color: #3b82f6; }
+  .a-purple { background: #150d2a; border-color: #8b5cf6; }
+  .a-cyan   { background: #0a1f2a; border-color: #06b6d4; }
+  .a-green  { background: #0a1f12; border-color: #22c55e; }
+  .a-orange { background: #1f100a; border-color: #f97316; }
+  .a-yellow { background: #1a1a08; border-color: #eab308; }
+  .a-pink   { background: #1f0a14; border-color: #ec4899; }
+
+  .phase-header {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    padding: 5px 14px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+    white-space: nowrap;
+  }
+  .ph1 { background: #1e1b4b; color: #a5b4fc; }
+  .ph2 { background: #1c0a00; color: #fb923c; }
+  .ph3 { background: #150d2a; color: #c084fc; }
+  .ph4 { background: #0a1f12; color: #4ade80; }
+
+  .phase-block {
+    background: #111118;
+    border: 1.5px solid #1e293b;
+    border-radius: 14px;
+    padding: 18px 16px;
+    width: 100%;
+  }
+  .phase-block .phase-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+
+  /* arrows */
+  .arrow { display: flex; flex-direction: column; align-items: center; color: #334155; font-size: 18px; line-height: 1; padding: 6px 0; }
+  .arrow span { font-size: 11px; color: #475569; margin-top: 1px; }
+  .arrow-h { color: #334155; font-size: 16px; padding: 0 4px; align-self: center; }
+
+  .parallel-label {
+    font-size: 10px;
+    color: #64748b;
+    text-align: center;
+    margin-bottom: 6px;
+    letter-spacing: 0.5px;
+  }
+
+  .gate-badge {
+    display: inline-block;
+    background: #422006;
+    color: #fb923c;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+    margin-top: 6px;
+  }
+
+  .loop-note {
+    font-size: 10px;
+    color: #64748b;
+    border: 1px dashed #334155;
+    border-radius: 8px;
+    padding: 6px 10px;
+    margin-top: 8px;
+    text-align: center;
+  }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; width: 100%; }
+
+  hr.divider { border: none; border-top: 1px solid #1e293b; width: 100%; margin: 4px 0; }
+
+  .tag { display: inline-block; font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 4px; margin-left: 6px; vertical-align: middle; }
+  .tag-parallel { background: #1e3a5f; color: #7dd3fc; }
+  .tag-seq      { background: #1a2e1a; color: #86efac; }
+  .tag-human    { background: #2d1515; color: #fca5a5; }
+</style>
+</head>
+<body>
+
+<h1>Agent System — How It Works</h1>
+<p class="subtitle">From Notion page → shipped full-stack app</p>
+
+<div class="flow">
+
+  <!-- YOU -->
+  <div class="box box-you">
+    <div class="label">Entry point</div>
+    <div class="title">You (Main Claude session)</div>
+    <div class="desc">"Spin up @orchestrator-agent — here's my Notion page ID, start Phase 1"</div>
+  </div>
+
+  <div class="arrow">↓<span>spawns</span></div>
+
+  <!-- ORCHESTRATOR -->
+  <div class="box box-orch" style="text-align:center">
+    <div class="label">Master coordinator</div>
+    <div class="title" style="color:#a78bfa">@orchestrator-agent</div>
+    <div class="desc">Reads Notion → writes PRD.md + UI_BRIEF.md locally → runs all phases → manages Notion kanban → never writes code</div>
+  </div>
+
+  <div class="arrow">↓<span>fetches from</span></div>
+
+  <!-- NOTION INPUT -->
+  <div class="box box-notion">
+    <div class="label">Input source</div>
+    <div class="title" style="color:#60a5fa">Notion Page</div>
+    <div class="desc">PRD · UI Brief · Feature list</div>
+  </div>
+
+  <div class="arrow">↓<span>begins</span></div>
+
+  <!-- PHASE 1 -->
+  <div class="phase-block" style="border-color:#3730a3">
+    <div class="phase-title">
+      <span class="dot" style="background:#818cf8"></span>
+      Phase 1 — Documentation
+      <span class="tag tag-parallel">parallel + sequential</span>
+    </div>
+
+    <div class="parallel-label">Run in parallel ↓</div>
+    <div class="two-col" style="margin-bottom:12px">
+      <div class="agent a-blue">
+        <div class="aname">@pm-agent</div>
+        <div class="aout">→ docs/features.md</div>
+        <div class="aout">Features, user stories, build order</div>
+      </div>
+      <div class="agent a-purple">
+        <div class="aname">@system-design-agent</div>
+        <div class="aout">→ docs/system-design.md</div>
+        <div class="aout">Architecture, data flows</div>
+      </div>
+    </div>
+
+    <div class="parallel-label">Then sequentially ↓</div>
+    <div class="two-col">
+      <div class="agent a-cyan">
+        <div class="aname">@db-agent</div>
+        <div class="aout">→ docs/schema.sql</div>
+        <div class="aout">PostgreSQL schema, indexes, triggers</div>
+      </div>
+      <div class="agent a-green">
+        <div class="aname">@api-design-agent</div>
+        <div class="aout">→ docs/api-spec.md</div>
+        <div class="aout">Every route, request + response shape</div>
+      </div>
+    </div>
+
+    <div style="margin-top:12px; text-align:center">
+      <div class="desc" style="font-size:11px;color:#64748b">All docs pushed to Notion as sub-pages + Kanban created</div>
+      <div class="gate-badge">⏸ HUMAN GATE — review docs → reply "go ahead"</div>
+    </div>
+  </div>
+
+  <div class="arrow">↓<span>after approval</span></div>
+
+  <!-- PHASE 2 + 3 parallel -->
+  <div style="width:100%">
+    <div class="parallel-label">Phase 2 + Phase 3 run in parallel ↓</div>
+    <div class="two-col">
+
+      <!-- Phase 2 -->
+      <div class="phase-block" style="border-color:#c2410c">
+        <div class="phase-title">
+          <span class="dot" style="background:#fb923c"></span>
+          Phase 2 — Backend
+        </div>
+        <div class="desc" style="font-size:11px;margin-bottom:10px">One feature at a time, in order</div>
+
+        <div class="agent a-orange" style="margin-bottom:8px">
+          <div class="aname">@be-dev-agent</div>
+          <div class="aout">Builds routes for one feature</div>
+          <div class="aout">Hono + Bun + raw SQL</div>
+        </div>
+        <div class="arrow" style="padding:4px 0">↓</div>
+        <div class="agent a-yellow" style="margin-bottom:8px">
+          <div class="aname">@qa-agent</div>
+          <div class="aout">Tests all routes — happy path,</div>
+          <div class="aout">edge cases, auth, bad inputs</div>
+        </div>
+        <div class="arrow" style="padding:4px 0">↓</div>
+        <div class="agent a-pink" style="margin-bottom:8px">
+          <div class="aname">@code-review-agent</div>
+          <div class="aout">Reviews git diff → APPROVED</div>
+          <div class="aout">or CHANGES REQUESTED</div>
+        </div>
+        <div class="loop-note">↺ QA fail or review changes → loops back to be-dev-agent</div>
+        <div style="margin-top:8px;font-size:11px;color:#64748b;text-align:center">On approval → merge feature branch → next feature</div>
+      </div>
+
+      <!-- Phase 3 -->
+      <div class="phase-block" style="border-color:#7c3aed">
+        <div class="phase-title">
+          <span class="dot" style="background:#c084fc"></span>
+          Phase 3 — UI Mockups
+        </div>
+        <div class="desc" style="font-size:11px;margin-bottom:10px">Runs independently, doesn't block Phase 2</div>
+
+        <div class="agent a-purple" style="margin-bottom:8px">
+          <div class="aname">@ui-designer-agent</div>
+          <div class="aout">HTML mockups for every screen</div>
+          <div class="aout">4 states: default, loading, empty, error</div>
+          <div class="aout">→ docs/screens/*.html</div>
+        </div>
+        <div class="loop-note">↺ Human gives feedback → agent revises → repeat</div>
+        <div style="margin-top:8px;text-align:center">
+          <div class="gate-badge" style="background:#2d1a4a;color:#c084fc">⏸ HUMAN GATE — "screens approved"</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="arrow">↓<span>when both Phase 2 + 3 are done</span></div>
+
+  <!-- PHASE 4 -->
+  <div class="phase-block" style="border-color:#15803d">
+    <div class="phase-title">
+      <span class="dot" style="background:#4ade80"></span>
+      Phase 4 — Frontend
+      <span class="tag tag-seq">screen by screen</span>
+    </div>
+    <div class="desc" style="font-size:11px;margin-bottom:12px">Same loop as Phase 2, but for FE screens</div>
+
+    <div class="three-col">
+      <div class="agent a-blue">
+        <div class="aname">@fe-dev-agent</div>
+        <div class="aout">Converts HTML mockup → real Next.js screen, wired to API</div>
+      </div>
+      <div class="agent a-yellow">
+        <div class="aname">@qa-agent</div>
+        <div class="aout">Tests UI states, API wiring, error handling</div>
+      </div>
+      <div class="agent a-pink">
+        <div class="aname">@code-review-agent</div>
+        <div class="aout">Reviews diff → approve → merge</div>
+      </div>
+    </div>
+    <div class="loop-note" style="margin-top:10px">↺ Fail or changes → loops back to fe-dev-agent</div>
+  </div>
+
+  <div class="arrow">↓<span>all screens merged</span></div>
+
+  <!-- DONE -->
+  <div class="box" style="background:#0a1f12;border:1.5px solid #15803d;max-width:340px;text-align:center">
+    <div class="title" style="color:#4ade80">App shipped to main ✓</div>
+    <div class="desc">All features built, tested, reviewed, merged · Notion kanban fully Done · build-log.md complete</div>
+  </div>
+
+</div>
+
+<p style="text-align:center;font-size:11px;color:#334155;margin-top:40px">agent-system · every agent globally available via @agent-name · orchestrated from a single Notion page</p>
+
+</body>
+</html>
