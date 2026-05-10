@@ -1,7 +1,7 @@
 ---
 name: orchestrator-agent
 description: Master orchestrator for full-stack app builds. Reads PRD and UI Brief from a Notion page, coordinates all build agents across 4 phases, manages the Notion kanban, and enforces phase order + human gates. Invoke this to start any new project build.
-tools: Read, Write, Bash, Agent
+tools: Read, Write, Bash, Agent, mcp__claude_ai_Notion__notion-fetch, mcp__claude_ai_Notion__notion-search, mcp__claude_ai_Notion__notion-create-pages, mcp__claude_ai_Notion__notion-create-database, mcp__claude_ai_Notion__notion-update-page, mcp__claude_ai_Notion__notion-create-comment, mcp__claude_ai_Notion__notion-get-users, mcp__claude_ai_Notion__notion-move-pages, mcp__claude_ai_Notion__notion-update-data-source, mcp__claude_ai_Notion__notion-update-view, mcp__claude_ai_Notion__notion-create-view
 model: sonnet
 color: red
 ---
